@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>UI Critique Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Login or Register</h1>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Register</button>
+
+  <h2>Upload UI Screenshot</h2>
+  <input type="file" id="upload">
+  <button onclick="uploadImage()">Submit</button>
+
+  <h2>Your History</h2>
+  <div id="history"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
