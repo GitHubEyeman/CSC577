@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>UI Critique Tool</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <link rel="stylesheet" href="style.css">
+  <title>Supabase Auth Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Login or Register</h1>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="login()">Login</button>
-  <button onclick="signup()">Register</button>
+  <div id="auth-container">
+    <!-- Login Form -->
+    <div id="login-form">
+      <h2>Login</h2>
+      <input type="email" id="login-email" placeholder="Email">
+      <input type="password" id="login-password" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
 
-  <h2>Upload UI Screenshot</h2>
-  <input type="file" id="upload">
-  <button onclick="uploadImage()">Submit</button>
+    <!-- Register Form -->
+    <div id="register-form">
+      <h2>Register</h2>
+      <input type="email" id="register-email" placeholder="Email">
+      <input type="password" id="register-password" placeholder="Password">
+      <button onclick="register()">Register</button>
+    </div>
+  </div>
 
-  <h2>Your History</h2>
-  <div id="history"></div>
+  <!-- Display user info after login -->
+  <div id="user-info" style="display: none;">
+    <h2>Welcome, <span id="user-email"></span></h2>
+    <button onclick="logout()">Logout</button>
+  </div>
 
   <script src="script.js"></script>
 </body>
