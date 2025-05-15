@@ -1,61 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI UI Critique Tool</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-    h1 { color: #2c3e50; }
-    #preview { max-width: 100%; margin-top: 10px; border: 1px solid #ccc; }
-    #result { margin-top: 30px; padding: 20px; border: 1px solid #aaa; background: #f9f9f9; }
-    button { padding: 10px 15px; margin-top: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>UI Critique Assistant</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        textarea { width: 100%; height: 150px; }
+        button { margin-top: 10px; padding: 10px 20px; }
+        pre { background-color: #f4f4f4; padding: 15px; border-radius: 5px; }
+    </style>
 </head>
 <body>
-  <h1>📷 Upload UI Screenshot</h1>
-  <input type="file" id="imageInput" accept="image/*" />
-  <br/>
-  <img id="preview" src="" alt="" hidden/>
-  <br/>
-  <button onclick="analyze()">Analyze UI</button>
+    <h1>UI Design Critique Assistant</h1>
+    <p>Enter your UI description:</p>
+    <textarea id="description"></textarea><br>
+    <button onclick="submitDescription()">Get Critique</button>
+    <h2>💡 Critique:</h2>
+    <pre id="result">Your critique will appear here...</pre>
 
-  <div id="result" hidden>
-    <h2>📝 AI Feedback:</h2>
-    <p><strong>Description:</strong> <span id="desc"></span></p>
-    <p><strong>Critique:</strong><br/><span id="critique"></span></p>
-  </div>
-
-  <script>
-    const input = document.getElementById("imageInput");
-    const preview = document.getElementById("preview");
-
-    input.onchange = () => {
-      const file = input.files[0];
-      preview.src = URL.createObjectURL(file);
-      preview.hidden = false;
-    };
-
-    async function analyze() {
-      const file = input.files[0];
-      if (!file) return alert("Please select an image!");
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-      // 🔁 Replace this with your actual backend URL
-      const backendURL = "https://your-backend.onrender.com/analyze-ui";
-
-      const res = await fetch(backendURL, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      document.getElementById("desc").innerText = data.description;
-      document.getElementById("critique").innerText = data.critique;
-      document.getElementById("result").hidden = false;
-    }
-  </script>
+    <script>
+        async function submitDescription() {
+            const description = document.getElementById('description').value;
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description })
+            });
+            const data = await response.json();
+            document.getElementById('result').textContent = data.critique || data.error;
+        }
+    </script>
 </body>
 </html>
