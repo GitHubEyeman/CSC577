@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open AI Clip</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../static/js/script.js" defer></script>
+</head>
+    <body>
+        <div class="sidebar">
+            <div class="sidebar-top">
+                <h2>OPEN AI CLIP</h2>
+            </div>
+
+            <div class="sidebar-middle">
+                <button class="nav-button active">
+                    <img src="../static/images/home.png" alt="Home Icon" class="icon-image"> Home
+                </button>
+                <button class="nav-button">
+                    <img src="../static/images/profile.png" alt="Profile Icon" class="icon-image"> Profile
+                </button>
+                <button class="nav-button">
+                    <img src="../static/images/insight.png" alt="Insight Icon" class="icon-image"> Insight
+                </button>
+            </div>
+
+            <div class="sidebar-bottom">
+                <button id ="logoutBtn"  class="logout-button" onclick="window.location.href='login.html'">
+                    <img src="../static/images/logout.png" alt="Logout Icon" class="icon-image"> Log Out
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+        <h1>Registration</h1>
+
+        <div class="form-container">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <input type="email" id="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="password" placeholder="Password" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    </div>
+                    <br>
+                    <div class="button-container" style="justify-content: center;">
+                        <button type="submit">Register</button>
+                    </div>
+                </form>
+                <div id="message" class="message"></div>
+                <p style="text-align: center; margin-top: 5px;">
+                    Already have an account? <a href="login.html">Login here</a>
+                </p>
+        </div>
+        
+        
+    </body>
+
+</html>

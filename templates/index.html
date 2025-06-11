@@ -1,51 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>UI Critique from Image</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        img { max-width: 300px; margin-top: 20px; }
-        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-    </style>
+  <title>UI Critique Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Upload a UI Screenshot</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" name="image" required><br><br>
-        <button type="submit">Analyze</button>
-    </form>
+  <h1>Login or Register</h1>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Register</button>
 
-    <div id="output" style="margin-top: 30px;">
-        <h2>🧩 Detected UI Elements:</h2>
-        <ul id="elements"></ul>
-        <h2>💡 Critique:</h2>
-        <pre id="critique">Upload an image to get started...</pre>
-        <img id="preview" src="" style="display:none;">
-    </div>
+  <h2>Upload UI Screenshot</h2>
+  <input type="file" id="upload">
+  <button onclick="uploadImage()">Submit</button>
 
-    <script>
-        const form = document.getElementById('uploadForm');
-        const output = document.getElementById('output');
-        const preview = document.getElementById('preview');
+  <h2>Your History</h2>
+  <div id="history"></div>
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-
-            const file = form.elements.image.files[0];
-            preview.src = URL.createObjectURL(file);
-            preview.style.display = 'block';
-
-            const res = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await res.json();
-            document.getElementById('elements').innerHTML = data.elements.map(el => `<li>${el}</li>`).join('');
-            document.getElementById('critique').textContent = data.critique;
-        });
-    </script>
+  <script src="script.js"></script>
 </body>
 </html>

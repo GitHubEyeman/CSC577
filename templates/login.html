@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open AI Clip</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <!-- Add Supabase JS and our script.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../static/js/script.js" defer></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <h2>OPEN AI CLIP</h2>
+        </div>
+
+        <div class="sidebar-center">
+            <button class="nav-button active" onclick="window.location.href='homepage.html'">
+                <img src="../static/images/home.png" alt="Home Icon" class="icon-image"> Home
+            </button>
+            <button class="nav-button" onclick="window.location.href='profile.html'">
+                <img src="../static/images/profile.png" alt="Profile Icon" class="icon-image"> Profile
+            </button>
+            <button class="nav-button" onclick="window.location.href='insight.html'">
+                <img src="../static/images/insight.png" alt="Insight Icon" class="icon-image"> Insight
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h2>Login</h2>
+        <!-- Changed to form with id="loginForm" for script.js to recognize -->
+        <div class="form-container">
+            <form id="loginForm">
+                <div class="form-group">
+                    <input type="email" id="email" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <br>
+                <div class="button-container">
+                    <!-- Changed to type="submit" for proper form submission -->
+                    <button type="submit">Login</button>
+                    <button type="button" onclick="location.href='register.html'">Sign Up</button>
+                </div>
+            
+                <!-- Added message div for displaying errors/success -->
+                <div id="message" class="message" style="display: none;"></div>
+            
+            </form>
+        </div>
+    </div>
+
+    
+    
+</body>
+</html>

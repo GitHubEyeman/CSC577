@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open AI Clip</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../static/js/script.js" defer></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <h2>OPEN AI CLIP</h2>
+        </div>
+
+        <div class="sidebar-middle">
+            <button class="nav-button active">
+                <img src="../static/images/home.png" alt="Home Icon" class="icon-image"> Home
+            </button>
+            <button class="nav-button" onclick="window.location.href='profile.html'">
+                <img src="../static/images/profile.png" alt="Profile Icon" class="icon-image"> Profile
+            </button>
+            <button class="nav-button" onclick="window.location.href='insight.html'">
+                <img src="../static/images/insight.png" alt="Insight Icon" class="icon-image"> Insight
+            </button>
+        </div>
+
+        <div class="sidebar-bottom">
+            <button id ="logoutBtn" class="logout-button" onclick="window.location.href='login.html'">
+                <img src="../static/images/logout.png" alt="Logout Icon" class="icon-image"> Log Out
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1>Grasp your website interface here!</h1>
+        <label for="fileInput" class="upload-button">Select PNG or JPEG file</label>
+        <input type="file" id="fileInput" accept=".png, .jpeg, .jpg" hidden>
+        <button id="uploadBtn" disabled>Upload Image</button>
+        <p>Max size 5MB</p>
+    </div>
+    <div id="message" class="message" style="display: none;"></div>
+    
+    <!--    Reminder to add this later to show current logined user: <span id="userEmail"></span>   -->
+</body>
+
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open AI Clip</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../static/js/script.js" defer></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <h2>OPEN AI CLIP</h2>
+        </div>
+
+        <div class="sidebar-middle">
+            <button class="nav-button" onclick="window.location.href='homepage.html'">
+                <img src="../static/images/home.png" alt="Home Icon" class="icon-image"> Home
+            </button>
+            <button class="nav-button active">
+                <img src="../static/images/profile.png" alt="Profile Icon" class="icon-image"> Profile
+            </button>
+            <button class="nav-button" onclick="window.location.href='insight.html'">
+                <img src="../static/images/insight.png" alt="Insight Icon" class="icon-image"> Insight
+            </button>
+        </div>
+
+       <div class="sidebar-bottom">
+            <button id ="logoutBtn"  class="logout-button" onclick="window.location.href='login.html'">
+                <img src="../static/images/logout.png" alt="Logout Icon" class="icon-image"> Log Out
+            </button>
+        </div>
+    </div>
+
+        <div class="main-content">
+        <h2>Profile</h2>
+        <div class="form-container">
+            <input type="text" value="Robert Jr. Speedy">
+            <input type="password" value="12345">
+            <input type="email" value="robert5@gmail.com">
+            <input type="text" value="0123456789">
+            <input type="text" value="Switzerland">
+            <div class="button-container">
+                <button>Edit Profile</button>
+                <button>Save</button>
+            </div>
+        </div>
+    </div>
+
+    
+</body>
+
+</html>
