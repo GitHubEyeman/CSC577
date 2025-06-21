@@ -27,18 +27,68 @@ export const AuthModel = {
     return data;
   },
 
-  async register(email, password) {
-    const { data, error } = await supabaseClient.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin }
-    });
-    if (error) throw error;
-    return data;
-  },
-
   async logout() {
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
-  }
+  },
+  
+  async register(email, password, userData) {
+    // First create auth user
+    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: {
+          full_name: userData.name // Store name in auth user metadata
+        }
+      }
+    });
+    
+    if (authError) throw authError;
+
+    // Then create profile in database
+    const { data: profileData, error: profileError } = await supabaseClient
+      .from('profiles') // Your table name
+      .insert([{
+        id: authData.user.id,
+        email: email,
+        full_name: userData.name,
+        date_of_birth: userData.dob
+      }])
+      .select();
+    
+    if (profileError) throw profileError;
+
+    return { authData, profileData };
+  },
+
+  async getProfile(userId) {
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+        
+        if (error) throw error;
+        return data;
+    },
+    
+    async updateProfile(userId, updates) {
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .update(updates)
+            .eq('id', userId)
+            .select();
+        
+        if (error) throw error;
+        return data;
+    }
+
+  
+
+
+
+
+
 };

@@ -34,7 +34,7 @@ export const AuthController = {
         );
         
         AuthView.showMessage(messageEl, 'Login successful! Redirecting...', 'success');
-        setTimeout(() => window.location.href = 'homepage.html', 1000);
+        setTimeout(() => window.location.href = 'profile.html', 1000);
       } catch (error) {
         AuthView.showMessage(messageEl, error.message);
       }
@@ -51,15 +51,32 @@ export const AuthController = {
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
       
+      // Validate password match
       if (password !== confirmPassword) {
         AuthView.showMessage(messageEl, 'Passwords do not match!');
         return;
       }
       
+      // Validate date of birth
+      const dob = new Date(document.getElementById('dob').value);
+      const minAgeDate = new Date();
+      minAgeDate.setFullYear(minAgeDate.getFullYear() - 13); // Example: minimum 13 years old
+      
+      if (dob > minAgeDate) {
+        AuthView.showMessage(messageEl, 'You must be at least 13 years old to register');
+        return;
+      }
+      
       try {
+        const userData = {
+          name: document.getElementById('name').value,
+          dob: document.getElementById('dob').value
+        };
+        
         await AuthModel.register(
           document.getElementById('email').value,
-          password
+          password,
+          userData
         );
         
         AuthView.showMessage(messageEl, 'Registration successful!', 'success');
