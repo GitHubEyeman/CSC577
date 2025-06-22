@@ -6,12 +6,13 @@ from PIL import Image
 import requests
 import json
 import os
-import io  # Add this import
-import numpy as np  # Add this import
+import io
+import numpy as np
 from supabase import create_client, Client
 import uuid
 from dotenv import load_dotenv
-
+from colorthief import ColorThief
+import webcolors
 
 # Load environment variables
 load_dotenv()
@@ -35,7 +36,64 @@ ui_elements = [
     "too much text", "poor contrast", "clean layout", "modern design"
 ]
 
+def get_color_palette(image_bytes):
+    """Extract color palette from image"""
+    color_thief = ColorThief(io.BytesIO(image_bytes))
+    palette = color_thief.get_palette(color_count=5)
+    return [webcolors.rgb_to_hex(color) for color in palette]
 
+def generate_structured_prompt(description, color_palette):
+    return f"""
+    Analyze this UI design and provide structured feedback in exactly this format:
+    
+    [OVERALL RATING]
+    X/10 - Brief justification
+    
+    [COLOR CRITIQUE]
+    - Analyze this color palette: {color_palette}
+    - Evaluate color harmony, contrast, and accessibility
+    - Suggest specific improvements if needed
+    
+    [OTHER FEEDBACK]
+    - Address these UI characteristics: {description}
+    - Focus on layout, hierarchy, and usability
+    - Provide actionable suggestions
+    
+    Do not include:
+    - Any additional commentary outside the sections
+    - Questions or prompts to the user
+    - Markdown formatting like ** or #
+    - Examples or disclaimers
+    """
+
+def parse_critique_response(raw_critique):
+    """Parse the structured response into sections"""
+    critique_parts = {
+        'overall_rating': '',
+        'color_critique': '',
+        'other_feedback': ''
+    }
+    
+    current_section = None
+    for line in raw_critique.split('\n'):
+        line = line.strip()
+        if line.startswith('[OVERALL RATING]'):
+            current_section = 'overall_rating'
+        elif line.startswith('[COLOR CRITIQUE]'):
+            current_section = 'color_critique'
+        elif line.startswith('[OTHER FEEDBACK]'):
+            current_section = 'other_feedback'
+        elif current_section and line and not line.startswith('['):
+            # Clean line from any remaining markdown
+            clean_line = line.replace('**', '').replace('#', '').strip()
+            if clean_line:
+                critique_parts[current_section] += clean_line + '\n'
+    
+    # Clean up each section
+    for key in critique_parts:
+        critique_parts[key] = critique_parts[key].strip()
+    
+    return critique_parts
 
 @app.route('/test-connection')
 def test_connection():
@@ -51,57 +109,6 @@ def test_connection():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/verify-supabase', methods=['GET'])
-def verify_supabase():
-    try:
-        # Test storage access
-        storage_test = supabase.storage.from_('images').list()
-        if storage_test.error:
-            return jsonify({"storage": "failed", "error": storage_test.error.message}), 500
-        
-        # Test database access
-        db_test = supabase.table('analyses').select("*").limit(1).execute()
-        if hasattr(db_test, 'error') and db_test.error:
-            return jsonify({"database": "failed", "error": db_test.error.message}), 500
-        
-        return jsonify({
-            "storage": "working",
-            "database": "working",
-            "table_exists": len(db_test.data) >= 0
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-
-@app.route('/verify-storage', methods=['GET'])
-def verify_storage():
-    try:
-        # Test if bucket exists
-        response = supabase.storage.from_('images').list()
-        if response.error:
-            return jsonify({"error": "'images' bucket not found"}), 404
-        
-        # Test small upload/download
-        test_data = b'test'
-        path = 'test.txt'
-        upload_response = supabase.storage.from_('images').upload(path, test_data)
-        if upload_response.error:
-            return jsonify({"error": f"Upload failed: {upload_response.error.message}"}), 500
-            
-        downloaded = supabase.storage.from_('images').download(path)
-        if downloaded != test_data:
-            return jsonify({"error": "upload/download mismatch"}), 500
-            
-        # Clean up
-        supabase.storage.from_('images').remove([path])
-        return jsonify({"status": "working"})
-            
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-    
-
 @app.route('/analyze', methods=['POST'])
 def analyze_image():
     try:
@@ -112,7 +119,7 @@ def analyze_image():
         if not image_url or not user_id:
             return jsonify({"error": "Missing required parameters"}), 400
 
-        # Download image from Supabase storage - updated handling
+        # Download image from Supabase storage
         try:
             image_bytes = supabase.storage.from_('images').download(image_url)
             if not image_bytes:
@@ -136,21 +143,15 @@ def analyze_image():
             top_probs = np.argsort(probs[0])[::-1]
             top_elements = [ui_elements[idx] for idx in top_probs[:5]]
             description = ", ".join(top_elements)
+            
+            # Get color palette
+            color_palette = get_color_palette(image_bytes)
+            
         except Exception as processing_error:
             return jsonify({"error": f"Image processing failed: {str(processing_error)}"}), 400
 
         # Get critique from OpenRouter
-        prompt = f"""
-        You are a design critique assistant. Analyze this UI containing: {description}.
-        Provide specific recommendations addressing:
-        1. Visual hierarchy improvements
-        2. Usability enhancements
-        3. Color and contrast adjustments
-        4. Layout optimization
-        5. Mobile responsiveness considerations
-        
-        Be constructive and provide actionable suggestions.
-        """
+        prompt = generate_structured_prompt(description, color_palette)
         
         headers = {
             "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
@@ -162,7 +163,7 @@ def analyze_image():
         payload = {
             "model": "deepseek/deepseek-chat-v3-0324:free",
             "messages": [
-                {"role": "system", "content": "You are a professional UI/UX designer providing detailed, actionable feedback."},
+                {"role": "system", "content": "You are a professional UI/UX designer providing structured feedback."},
                 {"role": "user", "content": prompt}
             ],
             "temperature": 0.7,
@@ -173,51 +174,47 @@ def analyze_image():
             "https://openrouter.ai/api/v1/chat/completions", 
             headers=headers, 
             json=payload,
-            timeout=30  # Add timeout
+            timeout=30
         )
 
         if response.status_code == 200:
-            critique = response.json()['choices'][0]['message']['content']
-        else:
-            critique = f"Analysis partially completed. Could not get full critique: {response.text}"
-
-         # Store results in database
-        analysis_id = str(uuid.uuid4())
-        try:
+            raw_critique = response.json()['choices'][0]['message']['content']
+            critique_parts = parse_critique_response(raw_critique)
+            
+            # Store results in database
+            analysis_id = str(uuid.uuid4())
             insert_response = supabase.table('analyses').insert({
                 "id": analysis_id,
                 "user_id": user_id,
                 "image_url": image_url,
                 "results": {
-                    "elements": top_elements,
-                    "critique": critique,
-                    "scores": {ui_elements[i]: float(probs[0][i]) for i in top_probs[:5]}
+                    "color_palette": color_palette,
+                    "overall_rating": critique_parts['overall_rating'],
+                    "color_critique": critique_parts['color_critique'],
+                    "other_feedback": critique_parts['other_feedback'],
+                    "elements": top_elements
                 }
             }).execute()
 
-            # Check for errors in insert operation
             if hasattr(insert_response, 'error') and insert_response.error:
                 raise Exception(f"Database error: {insert_response.error.message}")
-            elif isinstance(insert_response, dict) and 'error' in insert_response:
-                raise Exception(f"Database error: {insert_response['error']}")
 
             return jsonify({
                 "status": "success",
                 "analysis_id": analysis_id,
-                "elements": top_elements,
-                "critique": critique,
+                "color_palette": color_palette,
+                "overall_rating": critique_parts['overall_rating'],
+                "color_critique": critique_parts['color_critique'],
+                "other_feedback": critique_parts['other_feedback'],
                 "image_url": image_url
             })
 
-        except Exception as db_error:
+        else:
+            error_msg = f"OpenRouter API error: {response.status_code} - {response.text}"
             return jsonify({
-                "status": "partial_success",
-                "analysis": {
-                    "elements": top_elements,
-                    "critique": critique
-                },
-                "message": f"Analysis completed but storage failed: {str(db_error)}"
-            }), 207  # Using 207 for partial success
+                "status": "error",
+                "message": error_msg
+            }), 500
 
     except Exception as e:
         app.logger.error(f"Analysis failed: {str(e)}", exc_info=True)
@@ -225,8 +222,6 @@ def analyze_image():
             "status": "error",
             "message": str(e)
         }), 500
-    
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

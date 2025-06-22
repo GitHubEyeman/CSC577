@@ -41,25 +41,41 @@
         <h1>UI Analysis Results</h1>
         
         <div class="critique-section">
-            <!-- Add loading indicator -->
+            <!-- Loading indicator -->
             <div id="loadingIndicator" style="display: none;">
                 <p>Loading analysis results...</p>
                 <div class="spinner"></div>
             </div>
             
-            <div id="analysisResults">
-                
-                <br>
-                <h2>Design Critique</h2>
-                <div id="critiqueText" style="white-space: pre-line;"></div>
+            <!-- Overall Rating -->
+            <div class="feedback-section">
+                <h2>Overall UI Usability Rating</h2>
+                <div id="overallRating" class="rating-box"></div>
             </div>
             
+            <!-- Color Palette -->
+            <div class="feedback-section">
+                <h2>UI Color Palette</h2>
+                <div id="colorPalette" class="color-palette" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; text-align: center; margin: 0 auto;"></div>
+                <br><br><br><br>
+                <h3>Color Analysis</h3>
+                <div id="colorCritique" class="feedback-content"></div>
+            </div>
+            
+            <!-- Other Feedback -->
+            <div class="feedback-section">
+                <h2>Other Feedback</h2>
+                <div id="otherFeedback" class="feedback-content"></div>
+            </div>
+            
+            <!-- Original image preview -->
             <div id="originalImageContainer">
                 <h3>Your Original Design</h3>
-                <img id="originalImagePreview" class="image-preview" alt="Original design" style="display: block; margin: 0 auto;">
+                <img id="originalImagePreview" class="image-preview" alt="Original design" style="display: block; margin: 10px auto;">
             </div>
             
-            <button id="downloadPdf" class="upload-button" style="margin: 0 auto;">
+            <!-- PDF download button -->
+            <button id="downloadPdf" class="upload-button" style="display: block; margin: 10px auto;">
                 Download Analysis as PDF
             </button>
         </div>

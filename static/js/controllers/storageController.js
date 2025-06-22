@@ -105,12 +105,13 @@ export const StorageController = {
           
           // Store for results page
           sessionStorage.setItem('currentAnalysis', JSON.stringify({
-              id: analysisData.analysis_id,
-              elements: analysisData.elements,
-              critique: analysisData.critique,
-              scores: analysisData.scores,
-              imageUrl: filePath
-          }));
+            id: analysisData.analysis_id,
+            imageUrl: filePath,
+            color_palette: analysisData.color_palette,
+            overall_rating: analysisData.overall_rating,
+            color_critique: analysisData.color_critique,
+            other_feedback: analysisData.other_feedback
+        }));
           
           // Redirect to results page
           window.location.href = 'results.html';
