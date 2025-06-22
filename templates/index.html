@@ -10,12 +10,6 @@
   <script type="module" src="../static/js/script.js" defer></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-    }
 
     body {
       margin: 0;
@@ -42,6 +36,10 @@
       justify-content: center;
       text-align: left;
       flex-direction: column;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
     }
 
     .hero-content {
@@ -126,7 +124,7 @@
 
       <div class="sidebar-bottom">
             <button id ="logoutBtn" class="logout-button" onclick="window.location.href='login.html'">
-                <img src="../static/images/logout.png" alt="Logout Icon" class="icon-image"> Log Out
+                <img src="../static/images/logout.png" alt="Logout Icon" class="icon-image"> <span id="authText">Log Out</span>
             </button>
         </div>
     </div>
@@ -143,5 +141,7 @@
   </div>
 
   <div id="message" class="message">Welcome back!</div>
+
+  
 </body>
 </html>

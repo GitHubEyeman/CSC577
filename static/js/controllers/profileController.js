@@ -4,7 +4,7 @@ import { supabaseClient } from '../services/supabaseService.js';
 
 export const ProfileController = {
     currentPage: 1,
-    itemsPerPage: 5, // Adjust as needed
+    itemsPerPage: 6, // Adjust as needed
     currentLayout: 'table', // 'table' or 'cards'
     totalPages: 1,
     currentHistory: [],
@@ -242,7 +242,7 @@ export const ProfileController = {
             this.renderCardView();
         }
     },
-    
+    //TESTTTTT //Tseesees
     renderTableView() {
         const historyContainer = document.getElementById('feedback-history-body');
         if (!historyContainer) return;
@@ -276,8 +276,8 @@ export const ProfileController = {
             
             // Rating column
             const ratingCell = document.createElement('td');
-            if (analysis.overall_rating) {
-                const match = analysis.overall_rating.match(/(\d+)\/10/);
+            if (analysis.results?.overall_rating) {
+                const match = analysis.results.overall_rating.match(/(\d+(\.\d+)?)\/10/);
                 const rating = match ? match[1] : '?';
                 ratingCell.textContent = `${rating}/10`;
             } else {
@@ -342,8 +342,8 @@ export const ProfileController = {
             // Rating
             const ratingDiv = document.createElement('div');
             ratingDiv.className = 'card-rating';
-            if (analysis.overall_rating) {
-                const match = analysis.overall_rating.match(/(\d+)\/10/);
+            if (analysis.results?.overall_rating) {
+                const match = analysis.results.overall_rating.match(/(\d+(\.\d+)?)\/10/);
                 const rating = match ? match[1] : '?';
                 ratingDiv.textContent = `Rating: ${rating}/10`;
             } else {

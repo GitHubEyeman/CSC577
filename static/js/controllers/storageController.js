@@ -26,6 +26,7 @@ export const StorageController = {
     const uploadBtn = document.getElementById('uploadBtn');
     const imagePreview = document.getElementById('imagePreview');
     const messageEl = document.getElementById('message');
+    const messageWait = document.getElementById('messageW');
     
     // Then check if they exist
     if (!fileInput || !uploadBtn || !imagePreview) return;
@@ -75,7 +76,7 @@ export const StorageController = {
       try {
           uploadBtn.disabled = true;
           uploadBtn.textContent = 'Analyzing...';
-          
+          messageWait.textContent = "This might take a minute or two...";
           const userFolder = `user_${user.id}`;
           const filePath = `${userFolder}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
           

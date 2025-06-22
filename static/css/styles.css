@@ -484,16 +484,19 @@ input[type="email"] {
 /* Button styles (assuming you have these in your CSS) */
 .button-primary {
     background-color: #4285f4;
+    border-radius: 5px;
     color: white;
 }
 
 .button-success {
     background-color: #3cb371;
+    border-radius: 5px;
     color: white;
 }
 
 .button-danger {
     background-color: #f44336;
+    border-radius: 5px;
     color: white;
 }
 

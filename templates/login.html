@@ -16,7 +16,7 @@
         </div>
 
         <div class="sidebar-center">
-            <button class="nav-button active" onclick="window.location.href='homepage.html'">
+            <button class="nav-button active" onclick="window.location.href='index.html'">
                 <img src="../static/images/home.png" alt="Home Icon" class="icon-image"> Home
             </button>
             <button class="nav-button" onclick="window.location.href='profile.html'">
@@ -25,6 +25,12 @@
             <button class="nav-button" onclick="window.location.href='insight.html'">
                 <img src="../static/images/insight.png" alt="Insight Icon" class="icon-image"> Insight
             </button>
+        </div>
+
+        <div class="sidebar-bottom">
+                <button id ="loginBtn"  class="logout-button" onclick="window.location.href='login.html'">
+                    <img src="../static/images/logout.png" alt="Logout Icon" class="icon-image"> Log in
+                </button>
         </div>
     </div>
 
@@ -45,7 +51,7 @@
                     <button type="submit">Login</button>
                     <button type="button" onclick="location.href='register.html'">Sign Up</button>
                 </div>
-            
+                <br>
                 <!-- Added message div for displaying errors/success -->
                 <div id="message" class="message" style="display: none;"></div>
             

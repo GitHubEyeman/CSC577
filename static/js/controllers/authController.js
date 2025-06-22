@@ -7,16 +7,21 @@ export const AuthController = {
     this.initRegister();
     this.initLogout();
     this.protectRoutes();
+    
   },
+
+
 
   async protectRoutes() {
     const publicPages = ['index.html', 'login.html', 'register.html'];
     const currentPage = window.location.pathname.split('/').pop();
+    const LogBtn = document.getElementById('sidebar-bottom');
     
     if (publicPages.includes(currentPage)) return;
-    
+
     const user = await AuthModel.checkAuth();
     if (user) AuthView.updateUserEmail(document.getElementById('userEmail'), user.email);
+    
   },
 
   initLogin() {

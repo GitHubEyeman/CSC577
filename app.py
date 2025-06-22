@@ -29,42 +29,98 @@ supabase = create_client(supabase_url, supabase_key)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device=device)
 
-# UI elements for analysis
-ui_elements = [
-    "login form", "search bar", "navigation menu", "colorful buttons",
-    "footer links", "large header text", "minimalist design",
-    "too much text", "poor contrast", "clean layout", "modern design"
-]
+# Enhanced UI elements with weights and categories
+ui_elements = {
+    "positive": [
+        {"element": "intuitive navigation", "weight": 0.9},
+        {"element": "effective search functionality", "weight": 0.8},
+        {"element": "clean visual hierarchy", "weight": 0.85},
+        {"element": "responsive design", "weight": 0.7},
+        {"element": "consistent styling", "weight": 0.75},
+        {"element": "good contrast", "weight": 0.8}
+    ],
+    "negative": [
+        {"element": "cluttered interface", "weight": -0.8},
+        {"element": "poor information architecture", "weight": -0.75},
+        {"element": "inconsistent styling", "weight": -0.6},
+        {"element": "lack of visual hierarchy", "weight": -0.7},
+        {"element": "too much text", "weight": -0.65},
+        {"element": "poor contrast", "weight": -0.8}
+    ]
+}
+
+def calculate_ui_score(detected_elements):
+    """Calculate a score based on detected elements and their weights"""
+    score = 5.0  # Neutral starting point
+    
+    # Check positive elements
+    for element in ui_elements["positive"]:
+        if element["element"] in detected_elements:
+            score += element["weight"]
+    
+    # Check negative elements
+    for element in ui_elements["negative"]:
+        if element["element"] in detected_elements:
+            score += element["weight"]
+    
+    # Ensure score stays within 0-10 range
+    return min(10, max(0, round(score, 1)))
+
+def get_rating_description(score):
+    """Get descriptive text based on score"""
+    if score >= 9: return "Excellent UI design"
+    elif score >= 7: return "Good design with minor improvements needed"
+    elif score >= 5: return "Average design needing several improvements"
+    else: return "Poor design needing significant work"
+
+def generate_structured_prompt(detected_elements, color_palette, ui_score):
+    """Generate a well-structured prompt for the AI critique"""
+    # Categorize detected elements
+    positive_elements = [e for e in detected_elements 
+                       if any(e == item["element"] for item in ui_elements["positive"])]
+    negative_elements = [e for e in detected_elements 
+                       if any(e == item["element"] for item in ui_elements["negative"])]
+    
+    prompt = f"""
+    Analyze this UI design with the following characteristics:
+    
+    [DETECTED FEATURES]
+    Overall Score: {ui_score}/10 - {get_rating_description(ui_score)}
+    
+    Strengths:
+    {', '.join(positive_elements) if positive_elements else 'None identified'}
+    
+    Weaknesses:
+    {', '.join(negative_elements) if negative_elements else 'None identified'}
+    
+    Color Palette: {', '.join(color_palette)}
+    
+    [REQUIRED RESPONSE FORMAT]
+    [OVERALL RATING]
+    X/10 - Brief justification that considers the detected features
+    
+    [COLOR CRITIQUE]
+    - Analyze this color palette
+    - Evaluate harmony, contrast, and accessibility
+    - Suggest improvements if needed
+    
+    [OTHER FEEDBACK]
+    - Address the detected features specifically
+    - Focus on layout, hierarchy, and usability
+    - Provide actionable suggestions
+    
+    Important:
+    - Maintain this exact section structure
+    - Don't include markdown formatting
+    - Be concise and professional
+    """
+    return prompt
 
 def get_color_palette(image_bytes):
     """Extract color palette from image"""
     color_thief = ColorThief(io.BytesIO(image_bytes))
     palette = color_thief.get_palette(color_count=5)
     return [webcolors.rgb_to_hex(color) for color in palette]
-
-def generate_structured_prompt(description, color_palette):
-    return f"""
-    Analyze this UI design and provide structured feedback in exactly this format:
-    
-    [OVERALL RATING]
-    X/10 - Brief justification
-    
-    [COLOR CRITIQUE]
-    - Analyze this color palette: {color_palette}
-    - Evaluate color harmony, contrast, and accessibility
-    - Suggest specific improvements if needed
-    
-    [OTHER FEEDBACK]
-    - Address these UI characteristics: {description}
-    - Focus on layout, hierarchy, and usability
-    - Provide actionable suggestions
-    
-    Do not include:
-    - Any additional commentary outside the sections
-    - Questions or prompts to the user
-    - Markdown formatting like ** or #
-    - Examples or disclaimers
-    """
 
 def parse_critique_response(raw_critique):
     """Parse the structured response into sections"""
@@ -84,7 +140,6 @@ def parse_critique_response(raw_critique):
         elif line.startswith('[OTHER FEEDBACK]'):
             current_section = 'other_feedback'
         elif current_section and line and not line.startswith('['):
-            # Clean line from any remaining markdown
             clean_line = line.replace('**', '').replace('#', '').strip()
             if clean_line:
                 critique_parts[current_section] += clean_line + '\n'
@@ -94,20 +149,6 @@ def parse_critique_response(raw_critique):
         critique_parts[key] = critique_parts[key].strip()
     
     return critique_parts
-
-@app.route('/test-connection')
-def test_connection():
-    try:
-        # Test auth
-        auth_response = supabase.auth.get_user()
-        # Test storage
-        storage_response = supabase.storage.from_('images').list()
-        return jsonify({
-            "auth": "working" if not auth_response.error else "failed",
-            "storage": "working" if not storage_response.error else "failed"
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze_image():
@@ -123,41 +164,43 @@ def analyze_image():
         try:
             image_bytes = supabase.storage.from_('images').download(image_url)
             if not image_bytes:
-                return jsonify({"error": "Failed to download image (empty response)"}), 400
-        except Exception as download_error:
-            return jsonify({"error": f"Download failed: {str(download_error)}"}), 400
+                return jsonify({"error": "Failed to download image"}), 400
+        except Exception as e:
+            return jsonify({"error": f"Download failed: {str(e)}"}), 400
 
         # Process image with CLIP
         try:
             image = Image.open(io.BytesIO(image_bytes))
             image_input = preprocess(image).unsqueeze(0).to(device)
-            text_inputs = torch.cat([clip.tokenize(desc) for desc in ui_elements]).to(device)
+            
+            # Prepare all element texts for CLIP
+            all_elements = [item["element"] for item in ui_elements["positive"]] + \
+                          [item["element"] for item in ui_elements["negative"]]
+            text_inputs = torch.cat([clip.tokenize(desc) for desc in all_elements]).to(device)
 
             with torch.no_grad():
-                image_features = model.encode_image(image_input)
-                text_features = model.encode_text(text_inputs)
                 logits_per_image, _ = model(image_input, text_inputs)
                 probs = logits_per_image.softmax(dim=-1).cpu().numpy()
 
-            # Get top elements
+            # Get top 5 elements
             top_probs = np.argsort(probs[0])[::-1]
-            top_elements = [ui_elements[idx] for idx in top_probs[:5]]
-            description = ", ".join(top_elements)
+            top_elements = [all_elements[idx] for idx in top_probs[:5]]
+            
+            # Calculate UI score
+            ui_score = calculate_ui_score(top_elements)
             
             # Get color palette
             color_palette = get_color_palette(image_bytes)
             
-        except Exception as processing_error:
-            return jsonify({"error": f"Image processing failed: {str(processing_error)}"}), 400
+        except Exception as e:
+            return jsonify({"error": f"Image processing failed: {str(e)}"}), 400
 
         # Get critique from OpenRouter
-        prompt = generate_structured_prompt(description, color_palette)
+        prompt = generate_structured_prompt(top_elements, color_palette, ui_score)
         
         headers = {
             "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:5000",
-            "X-Title": "UI Analyzer"
+            "Content-Type": "application/json"
         }
 
         payload = {
@@ -188,11 +231,12 @@ def analyze_image():
                 "user_id": user_id,
                 "image_url": image_url,
                 "results": {
+                    "elements": top_elements,
+                    "ui_score": ui_score,
                     "color_palette": color_palette,
                     "overall_rating": critique_parts['overall_rating'],
                     "color_critique": critique_parts['color_critique'],
-                    "other_feedback": critique_parts['other_feedback'],
-                    "elements": top_elements
+                    "other_feedback": critique_parts['other_feedback']
                 }
             }).execute()
 
@@ -202,22 +246,21 @@ def analyze_image():
             return jsonify({
                 "status": "success",
                 "analysis_id": analysis_id,
+                "elements": top_elements,
+                "ui_score": ui_score,
                 "color_palette": color_palette,
                 "overall_rating": critique_parts['overall_rating'],
                 "color_critique": critique_parts['color_critique'],
-                "other_feedback": critique_parts['other_feedback'],
-                "image_url": image_url
+                "other_feedback": critique_parts['other_feedback']
             })
 
         else:
-            error_msg = f"OpenRouter API error: {response.status_code} - {response.text}"
             return jsonify({
                 "status": "error",
-                "message": error_msg
+                "message": f"OpenRouter error: {response.status_code} - {response.text}"
             }), 500
 
     except Exception as e:
-        app.logger.error(f"Analysis failed: {str(e)}", exc_info=True)
         return jsonify({
             "status": "error",
             "message": str(e)
