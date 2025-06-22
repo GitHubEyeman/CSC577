@@ -2,6 +2,7 @@ import { StorageModel } from '../models/storageModel.js';
 import { StorageView } from '../views/storageView.js';
 import { AuthView } from '../views/authView.js';
 import { AuthModel } from '../models/authModel.js';
+import { supabaseClient } from '../services/supabaseService.js';
 
 export const StorageController = {
   async listUserFiles() {
@@ -58,7 +59,7 @@ export const StorageController = {
         reader.readAsDataURL(file);
         
         // Show and enable upload button
-        uploadBtn.style.display = 'inline-block'; // Changed from 'block' to 'inline-block'
+        uploadBtn.style.display = 'inline-block';
         uploadBtn.disabled = false;
       } else {
         // No file selected
@@ -72,30 +73,55 @@ export const StorageController = {
       if (!file || !user) return;
       
       try {
-        uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Uploading...';
-        
-        const userFolder = `user_${user.id}`;
-        const filePath = `${userFolder}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-        
-        await StorageModel.uploadFile('images', filePath, file);
-        
-        AuthView.showMessage(messageEl, 'Image uploaded successfully!', 'success');
-        
-        // Reset form
-        fileInput.value = '';
-        imagePreview.style.display = 'none';
-        uploadBtn.style.display = 'none';
-        uploadBtn.textContent = 'Upload Image';
-        
-        // Refresh file list
-        await this.listUserFiles();
+          uploadBtn.disabled = true;
+          uploadBtn.textContent = 'Analyzing...';
+          
+          const userFolder = `user_${user.id}`;
+          const filePath = `${userFolder}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+          
+          // Upload to Supabase
+          await StorageModel.uploadFile('images', filePath, file);
+          
+          // Start analysis
+          const response = await fetch('http://localhost:5000/analyze', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  image_url: filePath,
+                  user_id: user.id
+              })
+          });
+          
+
+          
+          if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Analysis failed');
+          }
+          
+          const analysisData = await response.json();
+          
+          // Store for results page
+          sessionStorage.setItem('currentAnalysis', JSON.stringify({
+              id: analysisData.analysis_id,
+              elements: analysisData.elements,
+              critique: analysisData.critique,
+              scores: analysisData.scores,
+              imageUrl: filePath
+          }));
+          
+          // Redirect to results page
+          window.location.href = 'results.html';
+          
       } catch (error) {
-        AuthView.showMessage(messageEl, error.message);
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = 'Upload Image';
+          AuthView.showMessage(messageEl, error.message);
+      } finally {
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = 'Upload Image';
       }
-    });
+  });
     
     await this.listUserFiles();
   }
