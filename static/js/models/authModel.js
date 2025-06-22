@@ -64,26 +64,60 @@ export const AuthModel = {
   },
 
   async getProfile(userId) {
-        const { data, error } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-        
-        if (error) throw error;
-        return data;
-    },
+      const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+      
+      if (error) throw error;
+      return data;
+  },
+  
+  async updateProfile(userId, updates) {
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId)
+        .select();
     
-    async updateProfile(userId, updates) {
-        const { data, error } = await supabaseClient
-            .from('profiles')
-            .update(updates)
-            .eq('id', userId)
-            .select();
-        
-        if (error) throw error;
-        return data;
-    }
+    if (error) throw error;
+    return data;
+  },
+
+  // In authModel.js or a new analysisModel.js
+  async getAnalysisHistory(userId) {
+      try {
+          const { data, error } = await supabaseClient
+              .from('analyses') // Your analyses table name
+              .select('*')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          return data;
+      } catch (error) {
+          console.error('Error fetching analysis history:', error);
+          throw error;
+      }
+  },
+
+  // Add these methods to your model
+  async deleteAnalysis(analysisId) {
+      try {
+          const { error } = await supabaseClient
+              .from('analyses')
+              .delete()
+              .eq('id', analysisId);
+          
+          if (error) throw error;
+          return true;
+      } catch (error) {
+          console.error('Error deleting analysis:', error);
+          throw error;
+      }
+  }
+
 
   
 

@@ -284,7 +284,8 @@ h2 {
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     width: 100%;
-    max-width: 500px;
+    max-width: 700px;
+    min-width: 250px;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -641,6 +642,178 @@ input[type="email"] {
     margin-top: 10px;
 }
 
+
+/* Add these styles to your CSS file */
+#feedback-history-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+#feedback-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#feedback-history-table th, 
+#feedback-history-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#feedback-history-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+}
+
+#feedback-history-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+
+/* Layout Toggle */
+.layout-toggle {
+    margin: 15px 0;
+    display: flex;
+    gap: 10px;
+}
+
+.layout-button {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.layout-button.active {
+    background: #6db47b;
+    color: white;
+    border-color: #6db47b;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.pagination button {
+    padding: 5px 10px;
+    min-width: 80px;
+}
+
+/* Card View */
+#card-view {
+    margin-top: 20px;
+}
+
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.feedback-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.feedback-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    padding: 10px 15px;
+    background: #f5f5f5;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+}
+
+.card-img-container {
+    padding: 15px;
+    text-align: center;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.card-rating {
+    padding: 0 15px;
+    font-weight: bold;
+    color: #6db47b;
+}
+
+.card-actions {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Table View */
+.thumbnail-img {
+    width: 50px;
+    height: auto;
+    border-radius: 4px;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 5px;
+}
+
+.small-btn {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+
+.data-warning {
+    padding: 15px;
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffeeba;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.loading-placeholder {
+    color: #999;
+    font-style: italic;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .cards-container {
+        grid-template-columns: 1fr;
+    }
+    
+    #feedback-history-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
 
 /* For smaller screens */
 @media (max-width: 480px) {

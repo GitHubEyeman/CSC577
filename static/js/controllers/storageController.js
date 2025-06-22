@@ -104,17 +104,58 @@ export const StorageController = {
           const analysisData = await response.json();
           
           // Store for results page
+          // After getting analysisData from the server:
+          // In the upload success handler:
           sessionStorage.setItem('currentAnalysis', JSON.stringify({
-            id: analysisData.analysis_id,
-            imageUrl: filePath,
-            color_palette: analysisData.color_palette,
-            overall_rating: analysisData.overall_rating,
-            color_critique: analysisData.color_critique,
-            other_feedback: analysisData.other_feedback
-        }));
+              id: analysisData.analysis_id,
+              imageUrl: filePath,
+              color_palette: analysisData.results?.color_palette || [],
+              overall_rating: analysisData.results?.overall_rating || 'No rating available',
+              color_critique: analysisData.results?.color_critique || 'No color critique available',
+              other_feedback: analysisData.results?.other_feedback || 'No additional feedback available'
+          }));
+
+          // In the uploadBtn click handler, after getting analysisData:
+          const analysisPayload = {
+              id: analysisData.analysis_id,
+              imageUrl: filePath,
+              color_palette: analysisData.color_palette || [],
+              overall_rating: analysisData.overall_rating || 'No rating available',
+              color_critique: analysisData.color_critique || 'No color critique available',
+              other_feedback: analysisData.other_feedback || 'No additional feedback available'
+          };
+
+          // Store for both immediate use and database consistency
+          sessionStorage.setItem('currentAnalysis', JSON.stringify(analysisPayload));
+
+          // Also update Supabase to match the structure
+          await supabaseClient
+              .from('analyses')
+              .update({
+                  results: {
+                      color_palette: analysisPayload.color_palette,
+                      overall_rating: analysisPayload.overall_rating,
+                      color_critique: analysisPayload.color_critique,
+                      other_feedback: analysisPayload.other_feedback
+                  }
+              })
+              .eq('analysis_id', analysisData.analysis_id);
+
+          window.location.href = `results.html?analysis_id=${analysisData.analysis_id}`;
+
+
+          // In displayAnalysisResults()
+          if (!analysisData.color_palette || !analysisData.overall_rating) {
+              console.warn("Analysis data is missing required fields:", analysisData);
+              const warning = document.createElement('div');
+              warning.className = 'data-warning';
+              warning.textContent = 'Some analysis data appears to be incomplete';
+              document.querySelector('.critique-section').prepend(warning);
+          }
+
           
-          // Redirect to results page
-          window.location.href = 'results.html';
+          
+
           
       } catch (error) {
           AuthView.showMessage(messageEl, error.message);

@@ -5,63 +5,67 @@ import { supabaseClient } from '../services/supabaseService.js';
 export const ResultsController = {
   async init() {
     try {
+      console.log("[DEBUG] Initializing results controller...");
+      
       // Check authentication
       const user = await AuthModel.checkAuth();
-      if (!user) return;
-      
-      // Get analysis data from session storage
-      const analysisData = JSON.parse(sessionStorage.getItem('currentAnalysis'));
+      if (!user) {
+        console.log("[DEBUG] User not authenticated, redirecting");
+        window.location.href = 'login.html';
+        return;
+      }
+
+       // Get analysis ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const analysisId = urlParams.get('analysis_id');
+
+        // Special handling for newly generated analyses
+        if (analysisId && !sessionStorage.getItem('currentAnalysis')) {
+            const freshData = await this.fetchAnalysisData(analysisId, user.id);
+            if (freshData) {
+                sessionStorage.setItem('currentAnalysis', JSON.stringify(freshData));
+            }
+        }
+
+      // Try to get from sessionStorage
+      let analysisData = JSON.parse(sessionStorage.getItem('currentAnalysis'));
+      console.log("[DEBUG] SessionStorage data:", analysisData);
+
+      // If no session data but we have an ID, fetch from server
+      if ((!analysisData || !analysisData.id) && analysisId) {
+        console.log("[DEBUG] Fetching analysis from server...");
+        analysisData = await this.fetchAnalysisData(analysisId, user.id);
+        console.log("[DEBUG] Fetched analysis data:", analysisData);
+        
+        if (analysisData) {
+          sessionStorage.setItem('currentAnalysis', JSON.stringify(analysisData));
+        }
+      }
+
       if (!analysisData) {
+        console.log("[DEBUG] No analysis data found, redirecting");
         window.location.href = 'insight.html';
         return;
       }
+
+      console.log("[DEBUG] Final analysis data:", analysisData);
       
-      // Get DOM elements
+      // Show loading indicator
       const loadingIndicator = document.getElementById('loadingIndicator');
-      const overallRating = document.getElementById('overallRating');
-      const colorPalette = document.getElementById('colorPalette');
-      const colorCritique = document.getElementById('colorCritique');
-      const otherFeedback = document.getElementById('otherFeedback');
-      const originalImage = document.getElementById('originalImagePreview');
-      const downloadBtn = document.getElementById('downloadPdf');
-      
-      // Show loading state
-      if (loadingIndicator) loadingIndicator.style.display = 'block';
-      
-      // Display results directly from session data
-      if (overallRating && analysisData.overall_rating) {
-        overallRating.innerHTML = this.formatRating(analysisData.overall_rating);
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+        console.log("[DEBUG] Loading indicator shown");
       }
-      
-      if (colorPalette && analysisData.color_palette) {
-        colorPalette.innerHTML = this.createColorPalette(analysisData.color_palette);
-      }
-      
-      if (colorCritique && analysisData.color_critique) {
-        colorCritique.textContent = analysisData.color_critique;
-      }
-      
-      if (otherFeedback && analysisData.other_feedback) {
-        otherFeedback.textContent = analysisData.other_feedback;
-      }
-      
-      // Show original image
-      if (originalImage) {
-        const { data: { publicUrl } } = supabaseClient.storage
-          .from('images')
-          .getPublicUrl(analysisData.imageUrl);
-        originalImage.src = publicUrl;
-        originalImage.style.display = 'block';
-      }
-      
-      // Set up PDF download
-      if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => this.downloadAsPdf(analysisData));
-      }
-      
+
+      // Display the results
+      await this.displayAnalysisResults(analysisData);
+
       // Hide loading indicator
-      if (loadingIndicator) loadingIndicator.style.display = 'none';
-      
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+        console.log("[DEBUG] Loading indicator hidden");
+      }
+
     } catch (error) {
       console.error('Results initialization error:', error);
       const errorContainer = document.getElementById('otherFeedback') || document.body;
@@ -70,10 +74,135 @@ export const ResultsController = {
       }
     }
   },
+
+  async displayAnalysisResults(analysisData) {
+    console.log("[DEBUG] Displaying analysis results...");
+    
+    // Verify DOM elements exist
+    const elements = {
+      overallRating: document.getElementById('overallRating'),
+      colorPalette: document.getElementById('colorPalette'),
+      colorCritique: document.getElementById('colorCritique'),
+      otherFeedback: document.getElementById('otherFeedback'),
+      originalImage: document.getElementById('originalImagePreview'),
+      downloadBtn: document.getElementById('downloadPdf')
+    };
+
+    console.log("[DEBUG] DOM elements:", elements);
+
+    // Display overall rating
+    if (elements.overallRating) {
+      try {
+        elements.overallRating.innerHTML = this.formatRating(analysisData.overall_rating || 'No rating available');
+        console.log("[DEBUG] Overall rating displayed");
+      } catch (e) {
+        console.error("Error displaying rating:", e);
+        elements.overallRating.innerHTML = '<div class="error">Error displaying rating</div>';
+      }
+    }
+
+    // Display color palette
+    if (elements.colorPalette) {
+      try {
+        elements.colorPalette.innerHTML = this.createColorPalette(analysisData.color_palette || []);
+        console.log("[DEBUG] Color palette displayed");
+      } catch (e) {
+        console.error("Error displaying color palette:", e);
+        elements.colorPalette.innerHTML = '<div class="error">Error displaying color palette</div>';
+      }
+    }
+
+    // Display color critique
+    if (elements.colorCritique) {
+      try {
+        elements.colorCritique.textContent = analysisData.color_critique || 'No color critique available';
+        console.log("[DEBUG] Color critique displayed");
+      } catch (e) {
+        console.error("Error displaying color critique:", e);
+        elements.colorCritique.textContent = 'Error displaying color critique';
+      }
+    }
+
+    // Display other feedback
+    if (elements.otherFeedback) {
+      try {
+        elements.otherFeedback.textContent = analysisData.other_feedback || 'No additional feedback available';
+        console.log("[DEBUG] Other feedback displayed");
+      } catch (e) {
+        console.error("Error displaying other feedback:", e);
+        elements.otherFeedback.textContent = 'Error displaying feedback';
+      }
+    }
+
+    // Display original image
+    if (elements.originalImage && analysisData.imageUrl) {
+      try {
+        const { data: { publicUrl } } = supabaseClient.storage
+          .from('images')
+          .getPublicUrl(analysisData.imageUrl);
+        console.log("[DEBUG] Image URL:", publicUrl);
+        
+        elements.originalImage.onload = () => {
+          console.log("[DEBUG] Image loaded successfully");
+          elements.originalImage.style.display = 'block';
+        };
+        elements.originalImage.onerror = () => {
+          console.error("[DEBUG] Error loading image");
+          elements.originalImage.style.display = 'none';
+        };
+        elements.originalImage.src = publicUrl;
+      } catch (e) {
+        console.error("Error displaying image:", e);
+      }
+    }
+
+    // Set up PDF download
+    if (elements.downloadBtn) {
+      elements.downloadBtn.addEventListener('click', () => this.downloadAsPdf(analysisData));
+      console.log("[DEBUG] PDF download button setup");
+    }
+  },
   
+  async fetchAnalysisData(analysisId, userId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('analyses')
+            .select(`
+                id,
+                analysis_id,
+                image_url,
+                results,
+                color_palette,
+                overall_rating,
+                color_critique,
+                other_feedback,
+                created_at
+            `)
+            .eq('analysis_id', analysisId)
+            .eq('user_id', userId)
+            .single();
+
+        if (error) throw error;
+        if (!data) throw new Error('Analysis not found');
+
+        // Handle both old and new data formats
+        return {
+            id: data.analysis_id,
+            imageUrl: data.image_url,
+            color_palette: data.results?.color_palette || data.color_palette || [],
+            overall_rating: data.results?.overall_rating || data.overall_rating || 'No rating available',
+            color_critique: data.results?.color_critique || data.color_critique || 'No color critique available',
+            other_feedback: data.results?.other_feedback || data.other_feedback || 'No additional feedback available'
+        };
+    } catch (error) {
+        console.error('Error fetching analysis data:', error);
+        throw error;
+    }
+},
+
   formatRating(ratingText) {
     if (!ratingText) return '<div class="rating-value">N/A</div>';
-    const match = ratingText.match(/(\d+)\/10/);
+    const match = ratingText.match(/(\d+(\.\d+)?)\/10/);
     const rating = match ? match[1] : '?';
     return `
       <div class="rating-value">${rating}/10</div>
