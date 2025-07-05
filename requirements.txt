@@ -1,8 +1,11 @@
 flask
+flask_cors
 python-dotenv
 supabase
 requests
+numpy
 torch
 pillow
 colorthief
+webcolors
 clip@git+https://github.com/openai/CLIP.git
